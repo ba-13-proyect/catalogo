@@ -35,7 +35,7 @@
     const result = await res.json();
       pedidos = result.success ? result.data : [];
       if (res.ok) {
-        pedidos = await res.json();
+        //pedidos = await res.json();
       }
     } catch (err) {
       error = 'Error al cargar los pedidos';
