@@ -1,6 +1,7 @@
 // src/routes/api/productos/+server.js
 import { json } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
+import { supabaseAdmin } from '$lib/supabaseServer'; // ✅ IMPORTAR ADMIN
 
 function generateSlug(nombre) {
   return nombre
@@ -16,6 +17,7 @@ async function ensureUniqueSlug(baseSlug, excludeId = null) {
   let counter = 1;
   
   while (true) {
+    // ✅ Usar cliente público para lectura (más rápido y no consume service_role)
     const query = supabase
       .from('productos')
       .select('id')
@@ -41,6 +43,7 @@ async function ensureUniqueSlug(baseSlug, excludeId = null) {
   }
 }
 
+// ✅ GET puede usar cliente público (solo lectura)
 export async function GET({ url }) {
   try {
     const destacado = url.searchParams.get('destacado');
@@ -73,6 +76,7 @@ export async function GET({ url }) {
   }
 }
 
+// ✅ POST debe usar supabaseAdmin
 export async function POST({ request }) {
   try {
     const body = await request.json();
@@ -117,9 +121,10 @@ export async function POST({ request }) {
       sku: body.sku?.trim() || null
     };
     
-    console.log('💾 Insertando producto:', productoData);
+    console.log('💾 Insertando producto con supabaseAdmin:', productoData);
     
-    const { data, error } = await supabase
+    // ✅ CORRECCIÓN: Usar supabaseAdmin en lugar de supabase
+    const { data, error } = await supabaseAdmin
       .from('productos')
       .insert([productoData])
       .select(`
@@ -150,6 +155,7 @@ export async function POST({ request }) {
   }
 }
 
+// ✅ PUT debe usar supabaseAdmin
 export async function PUT({ request }) {
   try {
     const body = await request.json();
@@ -176,7 +182,10 @@ export async function PUT({ request }) {
       updateData.slug = await ensureUniqueSlug(baseSlug, id);
     }
     
-    const { data, error } = await supabase
+    console.log('📤 Actualizando producto con supabaseAdmin:', id, updateData);
+    
+    // ✅ CORRECCIÓN: Usar supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('productos')
       .update(updateData)
       .eq('id', id)
@@ -188,13 +197,15 @@ export async function PUT({ request }) {
     
     if (error) throw error;
     
+    console.log('✅ Producto actualizado:', data);
     return json(data);
   } catch (error) {
-    console.error('Error en PUT /api/productos:', error);
+    console.error('❌ Error en PUT /api/productos:', error);
     return json({ error: error.message }, { status: 500 });
   }
 }
 
+// ✅ DELETE debe usar supabaseAdmin
 export async function DELETE({ url }) {
   try {
     const id = url.searchParams.get('id');
@@ -203,16 +214,20 @@ export async function DELETE({ url }) {
       return json({ error: 'ID del producto requerido' }, { status: 400 });
     }
     
-    const { error } = await supabase
+    console.log('🗑️ Eliminando producto con supabaseAdmin:', id);
+    
+    // ✅ CORRECCIÓN: Usar supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('productos')
       .delete()
       .eq('id', id);
     
     if (error) throw error;
     
+    console.log('✅ Producto eliminado:', id);
     return json({ success: true });
   } catch (error) {
-    console.error('Error en DELETE /api/productos:', error);
+    console.error('❌ Error en DELETE /api/productos:', error);
     return json({ error: error.message }, { status: 500 });
   }
 }
