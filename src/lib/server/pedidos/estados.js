@@ -75,10 +75,16 @@ export function validarTransicionConContexto(pedido, estadoNuevo) {
   // ✅ VALIDACIONES DE CONTEXTO
   
   // No puede pasar a PAGADO sin comprobante validado
-  if (estadoNuevo === ESTADOS.PAGADO && pedido.estado_pago !== ESTADOS_PAGO.PAGADO) {
+  /*if (estadoNuevo === ESTADOS.PAGADO && pedido.estado_pago !== ESTADOS_PAGO.PAGADO) {
     return {
       valido: false,
       mensaje: 'El pago debe estar validado antes de marcar como pagado'
+    };
+  }*/
+  if (estadoNuevo === ESTADOS.PAGADO && !pedido.constancia_pago_url) {
+    return {
+      valido: false,
+      mensaje: 'Debe haber un comprobante de pago para validar'
     };
   }
   
