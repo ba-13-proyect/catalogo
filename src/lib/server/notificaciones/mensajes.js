@@ -152,6 +152,33 @@ _${config.nombre_empresa || 'Tienda'}_`;
 
 function generarMensajePagoRechazado(pedido, config, metadata) {
   const motivo = metadata?.motivo || 'No se pudo validar el comprobante';
+   const requiereComprobante = metadata?.requiere_comprobante !== false;
+  const requiereDireccion = metadata?.requiere_direccion === true;
+  
+  let accionRequerida = '';
+  
+  if (requiereComprobante && requiereDireccion) {
+    accionRequerida = `
+📸 *Por favor:*
+1. Sube un nuevo comprobante de pago válido
+2. Verifica y corrige tu dirección de envío
+
+Puedes editar tu pedido y hacer los cambios necesarios.`;
+  } else if (requiereDireccion) {
+    accionRequerida = `
+📍 *Por favor:*
+Ingresa a tu pedido y corrige tu dirección de envío.
+
+Asegúrate de llenar todos los campos obligatorios.`;
+  } else {
+    accionRequerida = `
+📸 *Por favor:*
+Envía un nuevo comprobante que cumpla con los requisitos:
+- Imagen clara y legible
+- Fecha y hora visibles
+- Monto correcto: $${pedido.total.toFixed(2)}
+- Nombre del titular visible`;
+  }
   
   return `Hola ${pedido.cliente_nombre} 📋
 
@@ -161,9 +188,7 @@ function generarMensajePagoRechazado(pedido, config, metadata) {
 Lamentablemente no pudimos validar tu comprobante de pago:
 
 *Motivo:* ${motivo}
-
-Por favor, envíanos un nuevo comprobante que cumpla con los requisitos o contáctanos si tienes dudas.
-
+${accionRequerida}
 _${config.nombre_empresa || 'Tienda'}_`;
 }
 
